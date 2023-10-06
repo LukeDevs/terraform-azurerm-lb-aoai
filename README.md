@@ -4,6 +4,12 @@ A Terraform module to deploy and configure the neccessary services for providing
 This module deploys a single Azure Application Gateway to front of multiple different region based Azure OpenAI Services.
 
 Load balancing the Azure OpenAI Service allows for a higher combined Tokens Per Minute (TPM) and Requests Per Minute (RPM) throughput over levraging leveraging a single Azure OpenAI Service in isolation. 
+
+This module currently supports the load balancing of the following Azure OpenAI Services:
+* gpt-4-32k
+* gpt-35-turbo-16k
+* text-embedding-ada-002
+
 ## Authenticating against Loadbalanced Azure OpenAI Service
 Being load balanced it is not possible to use the Azure OpenAI Service API key to authenticate. Instead end users must be granted an appropriate Azure OpenAI RBAC role. Details of which can be found here: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/role-based-access-control.
 
