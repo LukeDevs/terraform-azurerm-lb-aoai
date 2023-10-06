@@ -31,3 +31,10 @@ module "load_balanced_open_ai" {
 ## Notes
 * Currently the deployed Azure OpenAI services are publicly addressable. Direct access to the Azure OpenAI services is restricted through the use of a Network Firewall Rule applied to each service. This rule is configured to only permit traffic coming from the Azure Application Gateway. 
 
+## Known Issues  
+  
+* CONTEXT: The Azure OpenAI Services identify as Azure Cognitive Services behind the scenes. Each Azure OpenAI Service is by default provisioned with maxmimum Tokens Per Minute quota assigned to it for the region its been deployed into. This module will fail to deploy if the Azure OpenAI Service is already at its maximum quota for that region.    
+      
+  ISSUE: Deleting Azure OpenAI Services via the portal will delete the resource from the Azure portal but does not release the Tokens Per Minute quota for the region. The platform registers these Azure OpenAI Services as 'Soft Deleted', these soft deleted instances will need to be purged to allow the module to deploy correctly into each region.    
+      
+  RESOLUTION: Use the aoai-soft-delete-purger.sh script to purge these soft deleted instances and free up the region based quota.  

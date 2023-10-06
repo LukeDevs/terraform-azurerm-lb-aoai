@@ -168,7 +168,7 @@ resource "azurerm_dns_a_record" "aoai_application_gateway_dns_record" {
   zone_name           = azurerm_dns_zone.aoai_application_gateway_dns_zone[0].name
   resource_group_name = local.load_balancer_resource_group_name
   ttl                 = 300
-  records             = azurerm_public_ip.load_balancer_front_end_public_ip.ip_address
+  records             = [azurerm_public_ip.load_balancer_front_end_public_ip.ip_address]
 }
 
 resource "azurerm_web_application_firewall_policy" "load_balancer_waf_policy" {
@@ -302,7 +302,7 @@ resource "azurerm_application_gateway" "aoai_application_gateway_load_balancer" 
 
 module "openai_instances" {
   source               = "./modules/openai"
-  allowed_ip_addresses = azurerm_public_ip.load_balancer_front_end_public_ip.ip_address
+  allowed_ip_addresses = [azurerm_public_ip.load_balancer_front_end_public_ip.ip_address]
   deployment_name      = local.naming_root
   models_to_deploy     = local.models_to_deploy
   resource_group_name  = azurerm_resource_group.aoai_services_resource_group.name
