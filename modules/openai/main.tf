@@ -56,10 +56,10 @@ locals {
   )
 
   gpt_35_model_name                   = "gpt-35-turbo-16k"
-  gpt_35_turbo_16k_primary_regions    = ["North Central US", "Australia East", "East US 2", "Canada East", "Sweden Central", "Japan East", "Switzerland North"]
+  gpt_35_turbo_16k_primary_regions    = ["North Central US", "Australia East", "East US 2", "Canada East", "Sweden Central", "Switzerland North"]
   gpt_35_turbo_16k_primary_tpm        = 300
   gpt_35_turbo_16k_primary_tpm_list   = [for _ in local.gpt_35_turbo_16k_primary_regions : local.gpt_35_turbo_16k_primary_tpm]
-  gpt_35_turbo_16k_secondary_regions  = ["East US", "France Central", "UK South"]
+  gpt_35_turbo_16k_secondary_regions  = ["East US", "UK South"]
   gpt_35_turbo_16k_secondary_tpm      = 240
   gpt_35_turbo_16k_model_version      = "0613"
   gpt_35_turbo_16k_secondary_tpm_list = [for _ in local.gpt_35_turbo_16k_secondary_regions : local.gpt_35_turbo_16k_secondary_tpm]
@@ -70,10 +70,10 @@ locals {
   )
 
   text_embedding_model_name                 = "text-embedding-ada-002"
-  text_embedding_ada_002_primary_regions    = ["North Central US", "East US 2", "Canada East", "Japan East", "UK South", "Sweden Central", "Switzerland North"]
+  text_embedding_ada_002_primary_regions    = ["North Central US", "East US 2", "Canada East", "UK South", "Sweden Central", "Switzerland North"]
   text_embedding_ada_002_primary_tpm        = 350
   text_embedding_ada_002_primary_tpm_list   = [for _ in local.text_embedding_ada_002_primary_regions : local.text_embedding_ada_002_primary_tpm]
-  text_embedding_ada_002_secondary_regions  = ["East US", "France Central"]
+  text_embedding_ada_002_secondary_regions  = ["East US"]
   text_embedding_ada_002_secondary_tpm      = 240
   text_embedding_ada_002_secondary_tpm_list = [for _ in local.text_embedding_ada_002_secondary_regions : local.text_embedding_ada_002_secondary_tpm]
   text_embedding_ada_002_model_version      = "2"
@@ -109,6 +109,11 @@ resource "azurerm_cognitive_account" "aoai_cognitive_account" {
   network_acls {
     default_action = "Deny"
     ip_rules       = local.allowed_ip_addresses
+  }
+
+  timeouts {
+    create = "60m"
+    update = "60m"
   }
 }
 
