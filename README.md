@@ -44,3 +44,9 @@ module "load_balanced_open_ai" {
   ISSUE: Deleting Azure OpenAI Services via the portal will delete the resource from the Azure portal but does not release the Tokens Per Minute quota for the region. The platform registers these Azure OpenAI Services as 'Soft Deleted', these soft deleted instances will need to be purged to allow the module to deploy correctly into each region.    
       
   RESOLUTION: Use the aoai-soft-delete-purger.sh script to purge these soft deleted instances and free up the region based quota.  
+
+* CONTEXT: The Azure OpenAI Services are currently in high demand. As such provisioning the resources can take a variable and non-deterministic amount of time. This can lead to the module failing to deploy due to the Azure OpenAI Service not being available.    
+      
+  ISSUE: The module will fail to deploy if the Azure OpenAI Service is not available.    
+      
+  RESOLUTION: Increased timeouts on the creation and update of Azure OpenAI Service resource. Alternatively rerun the module deployment. The module will not attempt to redeploy any resources that have already been successfully deployed.
