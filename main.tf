@@ -180,6 +180,13 @@ resource "azurerm_web_application_firewall_policy" "load_balancer_waf_policy" {
       version = "3.2"
     }
   }
+
+  # Ignoring changes to the policy settings as accepting default values, which in turn causes Terraform to think the resource has changed
+  lifecycle {
+    ignore_changes = [
+      policy_settings
+    ]
+  }
 }
 
 resource "azurerm_application_gateway" "aoai_application_gateway_load_balancer" {
