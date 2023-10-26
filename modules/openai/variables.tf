@@ -15,6 +15,13 @@ variable "resource_group_name" {
 }
 
 # Optional variables
+
+variable "model_regions_to_deploy" {
+  type        = map(list(string))
+  description = "The list of regions to deploy the OpenAI models to. Defaults to every region the models are available within."
+  default     = {}
+}
+
 variable "deployment_name" {
   type        = string
   description = "The user chosen name of the deployment."
