@@ -42,11 +42,11 @@ locals {
   }
 
   gpt_4_model_name             = "gpt-4-32k"
-  gpt_4_32k_primary_regions    = ["North Central US", "Australia East", "East US 2", "Canada East", "Japan East", "UK South", "Sweden Central", "Switzerland North"]
+  gpt_4_32k_primary_regions    = ["North Central US", "Australia East", "East US 2", "Canada East", "UK South", "Sweden Central", "Switzerland North"]
   gpt_4_32k_primary_tpm        = 80
   gpt_4_32k_primary_tpm_list   = [for _ in local.gpt_4_32k_primary_regions : local.gpt_4_32k_primary_tpm]
   gpt_4_32k_secondary_regions  = ["East US", "France Central"]
-  gpt_4_32k_secondary_tpm      = 40
+  gpt_4_32k_secondary_tpm      = 60
   gpt_4_32k_model_version      = "0613"
   gpt_4_32k_secondary_tpm_list = [for _ in local.gpt_4_32k_secondary_regions : local.gpt_4_32k_secondary_tpm]
   gpt_4_32k_all_regions        = concat(local.gpt_4_32k_primary_regions, local.gpt_4_32k_secondary_regions)
@@ -70,7 +70,7 @@ locals {
   )
 
   text_embedding_model_name                 = "text-embedding-ada-002"
-  text_embedding_ada_002_primary_regions    = ["North Central US", "East US 2", "Canada East", "Japan East", "UK South", "Sweden Central", "Switzerland North"]
+  text_embedding_ada_002_primary_regions    = ["North Central US", "Australia East", "East US 2", "Canada East", "Japan East", "UK South", "Sweden Central", "Switzerland North"]
   text_embedding_ada_002_primary_tpm        = 350
   text_embedding_ada_002_primary_tpm_list   = [for _ in local.text_embedding_ada_002_primary_regions : local.text_embedding_ada_002_primary_tpm]
   text_embedding_ada_002_secondary_regions  = ["East US", "France Central"]
@@ -84,9 +84,9 @@ locals {
   )
 
   model_region_pairs = flatten([
-    contains(var.models_to_deploy, local.gpt_4_model_name) ? [for region in local.gpt_4_32k_all_regions : { model = local.gpt_4_model_name, region = region }] : [],
-    contains(var.models_to_deploy, local.gpt_35_model_name) ? [for region in local.gpt_35_turbo_16k_all_regions : { model = local.gpt_35_model_name, region = region }] : [],
-    contains(var.models_to_deploy, local.text_embedding_model_name) ? [for region in local.text_embedding_ada_002_all_regions : { model = local.text_embedding_model_name, region = region }] : []
+    contains(var.models_to_deploy, local.gpt_4_model_name) ? [for region in lookup(var.model_regions_to_deploy, local.gpt_4_model_name, local.gpt_4_32k_all_regions) : { model = local.gpt_4_model_name, region = region }] : [],
+    contains(var.models_to_deploy, local.gpt_35_model_name) ? [for region in lookup(var.model_regions_to_deploy, local.gpt_35_model_name, local.gpt_35_turbo_16k_all_regions) : { model = local.gpt_35_model_name, region = region }] : [],
+    contains(var.models_to_deploy, local.text_embedding_model_name) ? [for region in lookup(var.model_regions_to_deploy, local.text_embedding_model_name, local.text_embedding_ada_002_all_regions) : { model = local.text_embedding_model_name, region = region }] : []
   ])
 
   models_to_deploy     = var.models_to_deploy

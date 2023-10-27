@@ -13,6 +13,17 @@ variable "models_to_deploy" {
 }
 
 # Optional variables  
+
+variable "model_regions_to_deploy" {
+  type        = map(list(string))
+  description = "The list of regions to deploy the OpenAI models to. Empty lists ensure the module defaults to deploying to every region the models are available within."
+  default = {
+    "gpt-35-turbo-16k"       = [],
+    "gpt-4-32k"              = [],
+    "text-embedding-ada-002" = []
+  }
+}
+
 variable "deployment_name" {
   type        = string
   description = "The user chosen name of the deployment."

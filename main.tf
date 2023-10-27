@@ -39,13 +39,14 @@ locals {
   frontend_https_port_name        = "aoai-frontend-https-port"
   ssl_certificate_name            = "aoai-ssl-cert"
   frontend_ip_configuration_name  = "aoai-frontend-ip-configuration"
-  backend_address_pool_name       = "aoai-backend-address-pool"
   backend_https_settings_name     = "aoai-backend-https-settings"
   http_listener_name              = "aoai-http-listener"
   https_listener_name             = "aoai-https-listener"
   http_request_routing_rule_name  = "aoai-http-request-routing-rule"
   https_request_routing_rule_name = "aoai-https-request-routing-rule"
   health_probe_name               = "aoai-health-probe"
+  url_path_map_name               = "aoai-model-url-path-map"
+  default_backend_address_pool    = "aoai-gpt-35-turbo-16k-backend-address-pool"
 
   # Calculated values
   prefix                                = random_string.unique_deployment_name.result
@@ -53,12 +54,15 @@ locals {
   deploy_https_listener                 = var.https_settings.ssl_certificate_password != "" && var.https_settings.domain_name != "" && var.https_settings.ssl_certificate_path != "" ? [1] : []
   deploy_http_listener                  = var.optional_application_gateway_settings.deploy_http_listener ? [1] : []
   deploy_domain_name                    = var.https_settings.domain_name != "" ? 1 : 0
+  deploy_http_listener_models           = local.deploy_http_listener == [1] ? keys(module.openai_instances.openai_model_fqdn_map) : []
+  deploy_https_listener_models          = local.deploy_https_listener == [1] ? keys(module.openai_instances.openai_model_fqdn_map) : []
 
   # Composed values
   naming_root = "${local.prefix}-${local.deployment_name}"
 
   # Variable mappings  
   models_to_deploy              = var.models_to_deploy
+  model_regions_to_deploy       = var.model_regions_to_deploy
   region                        = var.required_application_gateway_settings.region
   virtual_network_address_space = var.required_application_gateway_settings.virtual_network_address_space
   deployment_name               = var.deployment_name
@@ -227,9 +231,13 @@ resource "azurerm_application_gateway" "aoai_application_gateway_load_balancer" 
     public_ip_address_id = azurerm_public_ip.load_balancer_front_end_public_ip.id
   }
 
-  backend_address_pool {
-    name  = local.backend_address_pool_name
-    fqdns = module.openai_instances.openai_model_fqdn_list
+  dynamic "backend_address_pool" {
+    for_each = module.openai_instances.openai_model_fqdn_map
+    iterator = model
+    content {
+      name  = "aoai-${model.key}-backend-address-pool"
+      fqdns = model.value
+    }
   }
 
   backend_http_settings {
@@ -272,26 +280,44 @@ resource "azurerm_application_gateway" "aoai_application_gateway_load_balancer" 
     }
   }
 
+  url_path_map {
+    name                               = local.url_path_map_name
+    default_backend_address_pool_name  = local.default_backend_address_pool
+    default_backend_http_settings_name = local.backend_https_settings_name
+
+    dynamic "path_rule" {
+      for_each = module.openai_instances.openai_model_fqdn_map
+      iterator = model
+      content {
+        name                       = "${model.key}-path-rule"
+        paths                      = ["/openai/deployments/${model.key}/*"]
+        backend_address_pool_name  = "aoai-${model.key}-backend-address-pool"
+        backend_http_settings_name = local.backend_https_settings_name
+      }
+    }
+  }
   dynamic "request_routing_rule" {
-    for_each = local.deploy_http_listener
+    for_each = local.deploy_https_listener
     content {
-      name                       = local.http_request_routing_rule_name
-      rule_type                  = "Basic"
-      http_listener_name         = local.http_listener_name
-      backend_address_pool_name  = local.backend_address_pool_name
+      name                       = local.https_request_routing_rule_name
+      rule_type                  = "PathBasedRouting"
+      http_listener_name         = local.https_listener_name
+      backend_address_pool_name  = local.default_backend_address_pool
       backend_http_settings_name = local.backend_https_settings_name
+      url_path_map_name          = local.url_path_map_name
       priority                   = 100
     }
   }
 
   dynamic "request_routing_rule" {
-    for_each = local.deploy_https_listener
+    for_each = local.deploy_http_listener
     content {
-      name                       = local.https_request_routing_rule_name
-      rule_type                  = "Basic"
-      http_listener_name         = local.https_listener_name
-      backend_address_pool_name  = local.backend_address_pool_name
+      name                       = local.http_request_routing_rule_name
+      rule_type                  = "PathBasedRouting"
+      http_listener_name         = local.http_listener_name
+      backend_address_pool_name  = local.default_backend_address_pool
       backend_http_settings_name = local.backend_https_settings_name
+      url_path_map_name          = local.url_path_map_name
       priority                   = 200
     }
   }
@@ -305,12 +331,24 @@ resource "azurerm_application_gateway" "aoai_application_gateway_load_balancer" 
     timeout                                   = 30
     unhealthy_threshold                       = 3
   }
+
+  # Ignoring changes to the request routing rules Terraform flags these as having changed when they havent. 
+  # Most likely this is down to the url_path_map being dynamically generated based on user provided models.
+  lifecycle {
+    ignore_changes = [
+      request_routing_rule
+    ]
+  }
+
+  depends_on = [module.openai_instances]
 }
 
+
 module "openai_instances" {
-  source               = "./modules/openai"
-  allowed_ip_addresses = [azurerm_public_ip.load_balancer_front_end_public_ip.ip_address]
-  deployment_name      = local.naming_root
-  models_to_deploy     = local.models_to_deploy
-  resource_group_name  = azurerm_resource_group.aoai_services_resource_group.name
+  source                  = "./modules/openai"
+  allowed_ip_addresses    = [azurerm_public_ip.load_balancer_front_end_public_ip.ip_address]
+  deployment_name         = local.naming_root
+  models_to_deploy        = local.models_to_deploy
+  model_regions_to_deploy = local.model_regions_to_deploy
+  resource_group_name     = azurerm_resource_group.aoai_services_resource_group.name
 }
