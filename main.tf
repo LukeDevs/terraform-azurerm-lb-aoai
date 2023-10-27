@@ -46,7 +46,7 @@ locals {
   https_request_routing_rule_name = "aoai-https-request-routing-rule"
   health_probe_name               = "aoai-health-probe"
   url_path_map_name               = "aoai-model-url-path-map"
-  default_backend_address_pool    = "default-backend-address-pool"
+  default_backend_address_pool    = "aoai-gpt-35-turbo-16k-backend-address-pool"
 
   # Calculated values
   prefix                                = random_string.unique_deployment_name.result
@@ -282,7 +282,7 @@ resource "azurerm_application_gateway" "aoai_application_gateway_load_balancer" 
 
   url_path_map {
     name                               = local.url_path_map_name
-    default_backend_address_pool_name  = "aoai-gpt-35-turbo-16k-backend-address-pool"
+    default_backend_address_pool_name  = local.default_backend_address_pool
     default_backend_http_settings_name = local.backend_https_settings_name
 
     dynamic "path_rule" {
@@ -299,10 +299,10 @@ resource "azurerm_application_gateway" "aoai_application_gateway_load_balancer" 
   dynamic "request_routing_rule" {
     for_each = local.deploy_https_listener
     content {
-      name                       = "aoai-https-request-routing-rule"
+      name                       = local.https_request_routing_rule_name
       rule_type                  = "PathBasedRouting"
       http_listener_name         = local.https_listener_name
-      backend_address_pool_name  = "aoai-gpt-35-turbo-16k-backend-address-pool"
+      backend_address_pool_name  = local.default_backend_address_pool
       backend_http_settings_name = local.backend_https_settings_name
       url_path_map_name          = local.url_path_map_name
       priority                   = 100
@@ -312,10 +312,10 @@ resource "azurerm_application_gateway" "aoai_application_gateway_load_balancer" 
   dynamic "request_routing_rule" {
     for_each = local.deploy_http_listener
     content {
-      name                       = "aoai-http-request-routing-rule"
+      name                       = local.http_request_routing_rule_name
       rule_type                  = "PathBasedRouting"
       http_listener_name         = local.http_listener_name
-      backend_address_pool_name  = "aoai-gpt-35-turbo-16k-backend-address-pool"
+      backend_address_pool_name  = local.default_backend_address_pool
       backend_http_settings_name = local.backend_https_settings_name
       url_path_map_name          = local.url_path_map_name
       priority                   = 200
@@ -330,6 +330,14 @@ resource "azurerm_application_gateway" "aoai_application_gateway_load_balancer" 
     interval                                  = 30
     timeout                                   = 30
     unhealthy_threshold                       = 3
+  }
+
+  # Ignoring changes to the request routing rules Terraform flags these as having changed when they havent. 
+  # Most likely this is down to the url_path_map being dynamically generated based on user provided models.
+  lifecycle {
+    ignore_changes = [
+      request_routing_rule
+    ]
   }
 
   depends_on = [module.openai_instances]

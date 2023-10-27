@@ -16,11 +16,11 @@ variable "models_to_deploy" {
 
 variable "model_regions_to_deploy" {
   type        = map(list(string))
-  description = "The list of regions to deploy the OpenAI models to. Defaults to every region the models are available within."
+  description = "The list of regions to deploy the OpenAI models to. Empty lists ensure the module defaults to deploying to every region the models are available within."
   default = {
-    "gpt-35-turbo-16k"       = ["North Central US", "Australia East", "East US 2", "Canada East", "Sweden Central", "Japan East", "Switzerland North", "East US", "France Central", "UK South"],
-    "gpt-4-32k"              = ["North Central US", "Australia East", "East US 2", "Canada East", "Japan East", "UK South", "Sweden Central", "Switzerland North", "East US", "France Central"],
-    "text-embedding-ada-002" = ["North Central US", "East US 2", "Canada East", "Japan East", "UK South", "Sweden Central", "Switzerland North", "East US", "France Central"]
+    "gpt-35-turbo-16k"       = [],
+    "gpt-4-32k"              = [],
+    "text-embedding-ada-002" = []
   }
 }
 

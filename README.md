@@ -13,11 +13,30 @@ This module currently supports the load balancing of the following Azure OpenAI 
 ## Authenticating against Loadbalanced Azure OpenAI Service
 Being load balanced it is not possible to use the Azure OpenAI Service API key to authenticate. Instead end users must be granted an appropriate Azure OpenAI RBAC role. Details of which can be found here: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/role-based-access-control.
 
+## Change Log
+### Version 1.0.0
+  * Initial release of the module.
+### Version 1.0.1
+  * Updated the create and update timeout values for the Azure Cognitive Account to 60 minutes. Mitigating for extended deployment times 
+  of the Azure OpenAI Service in high demand regions. 
+  * Reinstated deployment regions for gpt-35-turbo-16k and text-embedding-ada-002.
+### Version 1.0.2
+  * Added lifecycle ignore changes on the WAF policy_settings. Currently using the defaults which flag as being changed by Terraform on every Terraform plan.
+  * Added aoai-deployment-status.sh script to check the status of the Azure OpenAI Service deployments.
+### Version 1.1.0
+  * Added the ability to optionally specify which region(s) to deploy the Azure OpenAI Service(s) into.
+  * Dynamically generate backend pools for each model to be deployed populated with the endpoints of the Azure OpenAI Service(s) deployed into the specified region(s). Not specifying regions automnatically deploys the Azure OpenAI Service(s) into all available model regions.
+
 ## Module Usage
 ```hcl
 module "load_balanced_open_ai" {
   source           = "../.."
-  models_to_deploy = ["gpt-35-turbo-16k", "text-embedding-ada-002"]
+  models_to_deploy = ["gpt-35-turbo-16k", "text-embedding-ada-002","gpt-4-32k"]
+  model_regions_to_deploy = {
+    "gpt-35-turbo-16k" ["Australia East"]
+    "gpt-4-32k" = ["Sweden Central", "Switzerland North"]
+    "text-embedding-ada-002" = ["Canada East"]
+  }
   required_application_gateway_settings = {
     region                        = "ukwest",
     virtual_network_address_space = ["10.41.0.0/16"]

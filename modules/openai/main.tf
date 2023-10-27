@@ -42,11 +42,11 @@ locals {
   }
 
   gpt_4_model_name             = "gpt-4-32k"
-  gpt_4_32k_primary_regions    = ["North Central US", "Australia East", "East US 2", "Canada East", "Japan East", "UK South", "Sweden Central", "Switzerland North"]
+  gpt_4_32k_primary_regions    = ["North Central US", "Australia East", "East US 2", "Canada East", "UK South", "Sweden Central", "Switzerland North"]
   gpt_4_32k_primary_tpm        = 80
   gpt_4_32k_primary_tpm_list   = [for _ in local.gpt_4_32k_primary_regions : local.gpt_4_32k_primary_tpm]
   gpt_4_32k_secondary_regions  = ["East US", "France Central"]
-  gpt_4_32k_secondary_tpm      = 40
+  gpt_4_32k_secondary_tpm      = 60
   gpt_4_32k_model_version      = "0613"
   gpt_4_32k_secondary_tpm_list = [for _ in local.gpt_4_32k_secondary_regions : local.gpt_4_32k_secondary_tpm]
   gpt_4_32k_all_regions        = concat(local.gpt_4_32k_primary_regions, local.gpt_4_32k_secondary_regions)
